@@ -386,11 +386,8 @@
     dealOneCardTo(playerCards);
 
     // if house is blackjack, Game Over (house win).
-    if (isBlackJack(houseCards)) {
-      console.log('house is BlackJack.');
-      youLose();
-      return;
-    }
+    if (isBlackJack(houseCards))
+      done();
   }
   
   runAllTests();
