@@ -1,0 +1,402 @@
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Black Jack</title>
+  <style>
+  .red {
+    color: red;
+  }
+  .black {
+    color: black;
+  }
+  </style>
+</head>
+<body>
+<table>
+  <tr><td><label>House cards.</label></td></tr>
+  <tr><td><label id='lbHouseCards'>No cards.</label></td></tr>
+  <tr><td><hr/></td></tr>
+  <tr><td><label>Player cards.</label></td></tr>
+  <tr><td><label id='lbPlayerCards'>No cards.</label></td></tr>
+  <tr>
+    <td>
+      <table>
+        <tr>
+          <td><button id='bnStart' onclick='startGame();'>Start</button></td>
+          <td><button id='bnDealPlayer' onclick='dealOneCardTo(playerCards);'>Deal</button></td>
+          <td><button id='bnPlayerDone' onclick='done();'>Done</button></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr><td><label id='lbMessage'/></td></tr>
+  
+</table>
+<script>
+  "use strict"
+  
+  /**
+   * A simple blackjack game for practice javascript.
+   * No bet and split rules.
+   */
+
+  //---------------------------------------------------------------------------
+  // Test Functions  
+  /**
+   * run a test of given testFunction.
+   * Limit: Only accept 1 parameter functions.
+   */
+  function runTest(TEST_NAME, testFunction, inputs, answers) {
+    var i, result;
+    for (i = 0; i < inputs.length; i++) {
+      result = testFunction(inputs[i]);
+      if (answers[i] != result) {
+        console.log(TEST_NAME + ' Failed, the result of inputs = '+inputs[i]+' is ' + result + ', expected answer is ' + answers[i]);
+        return false;
+      }
+    }
+    console.log(TEST_NAME + ' pass.');
+    return true;
+  }
+  
+  function testGetCardName() {
+    var TEST_NAME = 'testGetCardName';
+    var inputs = [0, 15, 36, 42, -1];
+    var answers = ['<label class="black">♠A</label>', '<label class="red">♥3</label>', '<label class="black">♣J</label>', '<label class="red">♦4</label>', 'Invalid cardIndex: -1'];
+    return runTest(TEST_NAME, getCardName, inputs, answers);
+  }
+  function testGetCardsString() {
+    var TEST_NAME = 'testGetCardsString';
+    var inputs = [
+      [], // empty cards
+      [1,2], // 2, 3
+      [0,10], // Ace, J
+      [0,34,11], // Ace, 9, Q
+      [40,23,11], // 2, J, Q
+      [0,13,9], // Ace, Ace, 10
+      [10,8,0,9], // J, 9, Ace, 10
+      [0,13,26,39], // Ace, Ace, Ace, Ace
+    ];
+    var answers = [
+      MSG_NO_CARDS,
+      '<label class="black">♠2</label>,<label class="black">♠3</label>: 5',
+      '<label class="black">♠A</label>,<label class="black">♠J</label>: 21 (BlackJack)',
+      '<label class="black">♠A</label>,<label class="black">♣9</label>,<label class="black">♠Q</label>: 20',
+      '<label class="red">♦2</label>,<label class="red">♥J</label>,<label class="black">♠Q</label>: 22<label class="red"> (Over)</label>',
+      '<label class="black">♠A</label>,<label class="red">♥A</label>,<label class="black">♠10</label>: 12',
+      '<label class="black">♠J</label>,<label class="black">♠9</label>,<label class="black">♠A</label>,<label class="black">♠10</label>: 30<label class="red"> (Over)</label>',
+      '<label class="black">♠A</label>,<label class="red">♥A</label>,<label class="black">♣A</label>,<label class="red">♦A</label>: 14',
+    ];
+    return runTest(TEST_NAME, getCardsString, inputs, answers);
+  }
+  
+  function testSumValue() {
+    var TEST_NAME = 'testSumValue';
+    var inputs = [
+      [], // empty cards
+      [1,2], // 2, 3
+      [0,10], // Ace, J
+      [0,8,11], // Ace, 9, Q
+      [1,10,11], // 2, J, Q
+      [0,13,9], // Ace, Ace, 10
+      [10,8,0,9], // J, 9, Ace, 10
+      [0,13,26,39], // Ace, Ace, Ace, Ace
+    ];
+    var answers = [0, 5, 21, 20, 22, 12, 30, 14];
+    return runTest(TEST_NAME, sumValue, inputs, answers);
+  }
+  
+  function testIsBlackJack() {
+    var TEST_NAME = 'testIsBlackJack';
+    var inputs = [
+      [], // empty cards
+      [1,2], // 2, 3
+      [0,10], // Ace, J
+      [10,13], // J, Ace
+      [0,13,26,39], // Ace, Ace, Ace, Ace
+      [5,3,0], // 6, 4, Ace
+      [10,8,0,9], // J, 9, Ace, 10
+    ];
+    var answers = [false, false, true, true, false, false, false];
+    return runTest(TEST_NAME, isBlackJack, inputs, answers);
+  }
+  function testIsOver() {
+    var TEST_NAME = 'testIsOver';
+    var inputs = [
+      [], // empty cards
+      [1,2], // 2, 3
+      [0,10], // Ace, J
+      [0,8,11], // Ace, 9, Q
+      [1,10,11], // 2, J, Q
+      [0,13,9], // Ace, Ace, 10
+      [10,8,0,9], // J, 9, Ace, 10
+      [0,13,26,39], // Ace, Ace, Ace, Ace
+    ];
+    var answers = [false, false, false, false, true, false, true, false];
+    return runTest(TEST_NAME, isOver, inputs, answers);
+  }
+
+  function runAllTests() {
+    if (!testSumValue())
+      return;
+    if (!testIsBlackJack())
+      return;
+    if (!testIsOver())
+      return;
+    if (!testGetCardName())
+      return;
+    if (!testGetCardsString())
+      return;
+  }
+  
+  //---------------------------------------------------------------------------
+  // variables  
+  var CARD_SUITS_NAME = ['<label class="black">♠', '<label class="red">♥', '<label class="black">♣', '<label class="red">♦'];
+  var CARD_NUMBER_NAME = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  var MSG_NO_CARDS = 'No cards.';
+  var cardLib = new Array(52);
+  var houseCards = [];
+  var playerCards = [];
+
+  /**
+   * The getCardName function maps the card index to its name,
+   *  Spade: Ace=0, two=1, ..., K=12
+   *  Heart: Ace=13, two=14, ..., K=25
+   *  Club: Ace=26, two=27, ..., K=38
+   *  Diamond: Ace=39, two=40, ..., K=51
+   *
+   * For example,
+   *  0 ---> "♠A"
+   *  15 ---> "♥3"
+   *  36 ---> "♣J"
+   */
+  function getCardName(cardIndex) {
+    // check cardIndex is valid.
+    if (cardIndex < 0 || cardIndex > 52)
+      return 'Invalid cardIndex: ' + cardIndex;
+    return CARD_SUITS_NAME[Math.floor(cardIndex / 13)] + CARD_NUMBER_NAME[cardIndex % 13] + '</label>';
+  }
+  
+  /**
+   * Converting the cards to string, show name of each card, and the total value of cards.
+   * Special cases: BlackJack and Over
+   * 
+   * ex:
+   *  cards=[1, 2], showIndex=0 ---> '♠2,♠3: 5'
+   *  cards=[10,13], showIndex=0 ---> "♠J,♥A: 21 (BlackJack)"
+   *  cards=[10,13], showIndex=0 ---> "♠J,♥A: 21 (BlackJack)"
+   * 
+   * @param cards: Target cards will been converted.
+   * @param showIndex: Each people can NOT see another's first card.
+   *        Default showIndex = 0 -- You can see all cards that you have.
+   */
+  function getCardsString(cards, showIndex = 0) {
+    if (cards.length <= 0)
+      return MSG_NO_CARDS;
+    var nameOfCards = [];
+    for (var i = 0; i < cards.length; i++)
+      nameOfCards.push(i < showIndex ? '?' : getCardName(cards[i]));
+    var result = nameOfCards.join() + (showIndex > 0? '' : (': ' + sumValue(cards)));
+    if (isBlackJack(cards))
+      result += ' (BlackJack)';
+    if (isOver(cards))
+      result += '<label class="red"> (Over)</label>';
+    return result;
+  }
+
+  /**
+   * Summary the total value of the given cards.
+   *  Card number 2 - 10: the value is equal to its card number.
+   *  Card number J, Q, K: value = 10
+   *  Card A: 11 if the sum of other cards <= 10; Otherwise 1.
+   * @return: The value summation of cards.
+   */
+  function sumValue(cards) {
+    // first pass, add all cards except Ace.
+    var sum = 0;
+    var i, cardValue;
+    for (i = 0; i < cards.length; i++) {
+      cardValue = (cards[i] % 13) + 1;
+      if (cardValue >= 11) // 11=J, 12=Q, 13=K
+        cardValue = 10;
+      if (cardValue == 1) // 1=Ace
+        cardValue = 11;
+      sum += cardValue;
+    }
+    if (sum <= 21)
+      return sum;    
+    // second pass, if sum >= 22, try subtract Ace (as 1).
+    for (i = 0; i < cards.length; i++) {
+      cardValue = (cards[i] % 13) + 1;
+      if (cardValue != 1) // 1=Ace
+        continue;
+      if (sum >= 22)
+        sum -= 10;
+    }
+    return sum;
+  }
+  
+  /**
+   * Checking if the cards is blackjack.
+   */
+  function isBlackJack(cards) {
+    return (sumValue(cards) == 21) && (cards.length == 2)
+  }
+  
+  /**
+   * Checking if the cards is Over (>=22)
+   */
+  function isOver(cards) {
+    return sumValue(cards) >= 22;
+  }
+
+  /**
+   * swap i-th and r-th card of the cards.
+   */
+  function swap(cards, i, r) {
+    var temp;
+    temp = cards[i];
+    cards[i] = cards[r];
+    cards[r] = temp;
+  }
+
+  /**
+   * Selecting a random card in range 0 to upperBound-1
+   * For example, 
+   * @return: target card index.
+   */
+  function randomCardInLib(upperBound) {
+    if (cardLib.length <= 0)
+      return -1;
+    return Math.floor(Math.random() * upperBound);
+  }
+  
+  function showCards(isPlayerDone = false) {
+    document.getElementById('lbHouseCards').innerHTML = getCardsString(houseCards, isPlayerDone? 0 : 1);
+    document.getElementById('lbPlayerCards').innerHTML = getCardsString(playerCards);
+  }
+  
+  /**
+   * Deal one card from cardLib to destCards
+   */
+  function dealOneCardTo(destCards) {
+    // if the destCards is over, stop deal.
+    if (isOver(destCards))
+      return;
+    // select a random card in range 0 to cardLib.length-1
+    var r = randomCardInLib(cardLib.length);
+    if (r == -1) {
+      console.log('dealOneCardTo Failed because the cardLib is empty.');
+      return;
+    }
+    // Swap the r-th card to the tail of cardLib, and then remove it from cardLib
+    swap(cardLib, r, cardLib.length-1);
+    var card = cardLib.pop();
+    // Final, insert the card to destination cards.
+    destCards.push(card);
+    // show changes.
+    showCards();
+  }
+  
+  /**
+   * Random shuffle the card library.
+   */
+  function shuffle() {
+    var r;
+    for (var i = cardLib.length-1; i > 0; i--) {
+      // select a random card in range 0 to i-1
+      r = randomCardInLib(cardLib.length);
+      // swap the i-th card and the random card in card library.
+      swap(cardLib, i, r);
+    }
+  }
+  
+  /**
+   * The done function is called when
+   *  1. the Player click 'Done' or
+   *  2. Player's cards is Over 21
+   * 
+   * In this function, 
+   */
+  function done() {
+    // house must draw until its cards >= 17
+    while (sumValue(houseCards)<17)
+      dealOneCardTo(houseCards);
+    showCards(true);
+
+    // If the player is Over(>=22) then player lose.
+    // Even if both the house and player are over, the player loses.
+    if (isOver(playerCards)) {
+      console.log('player is Over(' + sumValue(playerCards) + ')');
+      youLose();
+      return;
+    }
+    
+    // If the house is Over(>=22) then player win.
+    if (isOver(houseCards)) {
+      console.log('house is Over(' + sumValue(houseCards) + ')');
+      youWin();
+      return;
+    }
+    
+    // Both not over, compare it.
+    if (sumValue(houseCards) >= sumValue(playerCards))
+      youLose();
+    else
+      youWin();
+  }
+  
+  /**
+   * Initializing the card library.
+   * There are 4 x 13 = 52 cards in the card library,
+   * we store them using an integer array.
+   */
+  function initCardLib() {
+    for (var i = 0; i < 52; i++)
+      cardLib[i] = i;
+    shuffle();
+  }
+  
+  function resetGame() {
+    initCardLib();
+    houseCards = [];
+    playerCards = [];
+    showMessage('');
+  }
+
+  function showMessage(msg) {
+    console.log(msg);
+    document.getElementById('lbMessage').innerHTML = msg;
+  }
+  function youLose() {
+    showMessage('Game Over, you are LOSE.');
+  }
+  function youWin() {
+    showMessage('Game Over, you are WIN.');
+  }
+  
+  /**
+   * Start a new game.
+   */
+  function startGame() {
+    resetGame();
+    // deal 2 cards to house and each player.
+    dealOneCardTo(houseCards);
+    dealOneCardTo(playerCards);
+    dealOneCardTo(houseCards);
+    dealOneCardTo(playerCards);
+
+    // if house is blackjack, Game Over (house win).
+    if (isBlackJack(houseCards)) {
+      console.log('house is BlackJack.');
+      youLose();
+      return;
+    }
+  }
+  
+  runAllTests();
+  startGame();
+  
+</script>
+</body>
+</html>
