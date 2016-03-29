@@ -292,7 +292,7 @@
     // Swap the r-th card to the tail of cardLib, and then remove it from cardLib
     swap(cardLib, r, cardLib.length-1);
     var card = cardLib.pop();
-    // Final, insert the card to destination cards.
+    // Insert the selected card into destCards.
     destCards.push(card);
     // show changes.
     showCards();
@@ -312,14 +312,13 @@
   }
   
   /**
-   * The done function is called when
-   *  1. the Player click 'Done' or
-   *  2. Player's cards is Over 21
-   * 
-   * In this function, 
+   * The done function is called when the Player click 'Done' button.
+   * In this function,
+   *  1. The house must draw until its cards value >= 17.
+   *  2. Checking house and player cards to determine who win this game.
    */
   function done() {
-    // house must draw until its cards >= 17
+    // house must draw until its cards value >= 17
     while (sumValue(houseCards)<17)
       dealOneCardTo(houseCards);
     showCards(true);
